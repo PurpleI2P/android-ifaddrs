@@ -457,9 +457,13 @@ static void interpretAddr(struct nlmsghdr *p_hdr, struct ifaddrs **p_links, stru
                 break;
             }
             case IFA_LABEL:
-                strncpy(l_name, l_rtaData, l_rtaDataSize);
-                l_name[l_rtaDataSize] = '\0';
-                l_entry->ifa_name = l_name;
+                if(l_nameSize > 0) {
+                    strncpy(l_name, l_rtaData, l_nameSize - 1);
+                    l_name[l_nameSize - 1] = '\0';
+                    l_entry->ifa_name = l_name;
+                } else {
+                    l_entry->ifa_name = 0;
+                }
                 break;
             default:
                 break;
@@ -476,8 +480,9 @@ static void interpretAddr(struct nlmsghdr *p_hdr, struct ifaddrs **p_links, stru
         {
             l_mask[i] = 0xff;
         }
-        l_mask[i] = 0xff << (8 - (l_prefix % 8));
-        
+        if(i < l_prefix/8)
+            l_mask[i] = 0xff << (8 - (l_prefix % 8));
+
         makeSockaddr(l_entry->ifa_addr->sa_family, (struct sockaddr *)l_addr, l_mask, l_maxPrefix / 8);
         l_entry->ifa_netmask = (struct sockaddr *)l_addr;
     }
